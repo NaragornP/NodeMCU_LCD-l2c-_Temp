@@ -9,17 +9,19 @@
 #include <SimpleTimer.h>
 //-------------------------------LCD
 #include <Wire.h> 
-#include <LiquidCrystal_I2C.h> //ประกาศ Library ของจอ I2C
+//#include <LiquidCrystal_I2C.h> //ประกาศ Library ของจอ I2C
+#include <LiquidCrystal.h>
 //----------------------------------
 #include <Adafruit_Sensor.h>
 #include <DHT.h>
 #include "DHT.h"
 #include <DHT_U.h>
 
-#define DHTPIN            12    
+#define DHTPIN            D7    
 #define DHTTYPE           DHT22
 
-LiquidCrystal_I2C lcd(0x27, 16, 2);//--------------LCD
+//LiquidCrystal_I2C lcd(0x27, 16, 2);//--------------LCD
+LiquidCrystal lcd(12, 11, 5, 4, 3, 2);//NodeMCU
 DHT_Unified dht(DHTPIN, DHTTYPE);
 DHT dhtt(DHTPIN, DHTTYPE, 15);
 
@@ -29,41 +31,27 @@ SimpleTimer timer;
 
 void sendUptime()
 {
-    // Read temperature & Humidity
-  float t = dhtt.readTemperature();
-  float h = dhtt.readHumidity();
-  
-  Blynk.virtualWrite(V5, millis() / 1000);
+   Blynk.virtualWrite(V5, millis() / 1000);
   sensors_event_t event;  
   dht.temperature().getEvent(&event);
   if (!isnan(event.temperature)) {
     Blynk.virtualWrite(V1, event.temperature);
    }
-  lcd.print("Temp: |Humidity:");
-  lcd.setCursor(0, 1);
-  lcd.print(t);
-  lcd.print(" C | ");
-  lcd.print(h);
-   lcd.setCursor(0, 2);
+ 
    
   dht.humidity().getEvent(&event);
   if (!isnan(event.relative_humidity)) {
     Blynk.virtualWrite(V2, event.relative_humidity);
   }
-
-  
-
-  
- 
 }
 
 void setup()
 {
-  Serial.begin(9600);
+
   Blynk.begin(auth, "Itsecckmutnb", "0824687893");
-  Wire.begin(D1, D2); // sda, scl
+  //Wire.begin(D1, D2); // sda, scl
   dht.begin();
-  lcd.begin();
+  lcd.begin(16,2);
   
   // Setup a function to be called every second
   timer.setInterval(5000L, sendUptime);
@@ -73,4 +61,14 @@ void loop()
 {
   Blynk.run();
   timer.run();
+  
+  float t = dhtt.readTemperature();
+  float h = dhtt.readHumidity();
+  lcd.setCursor(0, 0);
+  lcd.print("Temp: |");
+  lcd.print(t);
+  lcd.print(" C");
+  lcd.setCursor(0, 1);
+  lcd.print("Humidity:");
+  lcd.print(h);
 }
